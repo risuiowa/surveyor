@@ -119,8 +119,11 @@ class QuestionGroup < ActiveRecord::Base
     context.delete_if{|k,v| !%w(survey survey_section question_references answer_references).map(&:to_sym).include?(k)}
 
     # build and set context
-    context[:question_group] = context[:question_group] = new({  :text => args[0] || "Question Group",
-                                      :display_type => (original_method =~ /grid|repeater/ ? original_method : "default")}.merge(args[1] || {}))
+    context[:question_group] = context[:question_group] = new({  
+      :text => args[0] || "Question Group",
+      :display_type => (original_method =~ /grid|repeater/ ? original_method : "default"),
+      :display_order => context[:survey_section].questions.size+1
+      }.merge(args[1] || {}))
 
   end
   def clear(context)
