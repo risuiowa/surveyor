@@ -23,7 +23,7 @@ module Surveyor
         end
         
         # Whitelisting attributes
-        base.send :attr_accessible, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :css_url, :custom_class, :display_order
+        base.send :attr_accessible, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :css_url, :custom_class, :display_order, :access_code
 
         # Class methods
         base.instance_eval do
