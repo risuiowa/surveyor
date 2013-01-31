@@ -48,6 +48,10 @@ module Surveyor
       def title=(value)
         return if value == self.title
         surveys = Survey.where(:access_code => Survey.to_normalized_string(value)).order("survey_version DESC")
+        # debugger
+        if surveys.empty?
+          surveys = Survey.where(:title => value).order("survey_version DESC")
+        end
         self.survey_version     = surveys.first.survey_version.to_i + 1 if surveys.any?
         self.access_code = Survey.to_normalized_string(value)
         super(value)
