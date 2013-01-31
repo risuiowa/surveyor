@@ -37,6 +37,16 @@ module Surveyor
       # Instance methods
       def initialize(*args)
         super(*args)
+        # debugger
+        if(!args[0][:access_code])
+          surveys = Survey.where(:access_code => Survey.to_normalized_string(args[0][:title])).order("survey_version DESC").limit(1)
+        else
+          surveys = Survey.where(:access_code => args[0][:access_code]).order("survey_version DESC").limit(1)
+        end
+
+        self.survey_version     = surveys.first.survey_version.to_i + 1 if surveys.any?
+        self.access_code = (args[0][:access_code]) ? args[0][:access_code] : Survey.to_normalized_string(args[0][:title])
+
         default_args
       end
 
@@ -47,13 +57,10 @@ module Surveyor
 
       def title=(value)
         return if value == self.title
-        surveys = Survey.where(:access_code => Survey.to_normalized_string(value)).order("survey_version DESC")
-        # debugger
-        if surveys.empty?
-          surveys = Survey.where(:title => value).order("survey_version DESC")
-        end
-        self.survey_version     = surveys.first.survey_version.to_i + 1 if surveys.any?
-        self.access_code = Survey.to_normalized_string(value)
+        # surveys = Survey.where(:access_code => Survey.to_normalized_string(value)).order("survey_version DESC")
+
+        # self.survey_version     = surveys.first.survey_version.to_i + 1 if surveys.any?
+        # self.access_code = Survey.to_normalized_string(value)
         super(value)
         # self.access_code = Survey.to_normalized_string(value)
         # super

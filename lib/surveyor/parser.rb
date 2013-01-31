@@ -83,7 +83,7 @@ class Survey < ActiveRecord::Base
     context.delete_if{|k,v| true }
     context[:question_references] = {}
     context[:answer_references] = {}
-
+    # debugger
     # build and set context
     title = args[0]
     context[:survey] = new({  :title => title,
