@@ -7,9 +7,10 @@ module Surveyor
         # Associations
         base.send :has_many, :questions
         base.send :has_one, :dependency
+        base.send :belongs_to, :survey_section
         
         # Whitelisting attributes
-        base.send :attr_accessible, :text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer
+        base.send :attr_accessible, :text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer,:survey_section,:survey_section_id
       end
 
       include RenderText

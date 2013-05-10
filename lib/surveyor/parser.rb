@@ -122,7 +122,8 @@ class QuestionGroup < ActiveRecord::Base
     context[:question_group] = context[:question_group] = new({  
       :text => args[0] || "Question Group",
       :display_type => (original_method =~ /grid|repeater/ ? original_method : "default"),
-      :display_order => context[:survey_section].questions.size+1
+      :display_order => context[:survey_section].questions.size+1,
+      :survey_section => context[:survey_section]
       }.merge(args[1] || {}))
 
   end
@@ -184,9 +185,9 @@ class Dependency < ActiveRecord::Base
 
     # build and set context
     if context[:question]
-      context[:dependency] = context[:question].build_dependency(args[0] || {})
+      context[:dependency] = context[:question].build_dependency((args[0] || {}).merge({:survey_section => context[:survey_section]}))
     elsif context[:question_group]
-      context[:dependency] = context[:question_group].build_dependency(args[0] || {})
+      context[:dependency] = context[:question_group].build_dependency((args[0] || {}).merge({:survey_section => context[:survey_section]}))
     end
   end
 end
