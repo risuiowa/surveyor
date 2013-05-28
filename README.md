@@ -1,4 +1,4 @@
-# Surveys On Rails
+# Surveys On Rails 3.2.13
 
 Surveyor is a developer tool that brings surveys into Rails
 applications. Surveys are written in the Surveyor DSL (Domain Specific
