@@ -30,7 +30,6 @@ module Surveyor
     def method_missing(missing_method, *args, &block)
       method_name, reference_identifier = missing_method.to_s.split("_", 2)
       type = full(method_name)
-
       Surveyor::Parser.rake_trace reference_identifier.blank? ? "#{type} " : "#{type}_#{reference_identifier} "
 
       # check for blocks
@@ -133,7 +132,9 @@ class QuestionGroup < ActiveRecord::Base
 end
 class Question < ActiveRecord::Base
   # nonblock
-
+  # Class variable of question number to be incremented on each question and restarted on each section 
+  @@question_number = 0
+  @@current_section = "" 
   # attributes
   attr_accessor :correct, :context_reference
   before_save :resolve_correct_answers
@@ -144,10 +145,37 @@ class Question < ActiveRecord::Base
     # clear context
     context.delete_if{|k,v| %w(question dependency dependency_condition answer validation validation_condition).map(&:to_sym).include? k}
 
+    if(@@current_section != context[:survey_section][:data_export_identifier])
+      @@current_section = context[:survey_section][:data_export_identifier]  
+      @@question_number = 0
+    end
+    # Notes on question numbering:
+    # The most common case of when the question_number property should not be null is when original_method == q
+    # There are cases when numbering a question doesn't make sense, as when the question is a checkbox or is hidden entirely.
+    # As a label is also of the type Question, there are instances wherein we will force numbering.
+    # mod_keys and omit_display types are here to help detect which questions we either need to skip or force.
+    # omit_question_number and force_question_number are not properties of the model, as they are only necessary during the parsing,
+    # and so they are deleted before creating the question (or else it throws an error, obviously).
+    mod_keys = [:omit_question_number, :grid_display, :force_question_number]
+    omit_display_types = [:checkbox, :hidden] 
+    if(args[1] && ( mod_keys.any?{|elem| args[1].has_key?(elem)} || omit_display_types.any?{|elem| args[1][:display_type]==elem } ))  
+      force_question_number = args[1][:force_question_number]
+      omit_question_number = true 
+      args[1].delete(:omit_question_number)
+      args[1].delete(:force_question_number)
+    end
+
+    if(force_question_number || (original_method == 'q' && !omit_question_number)) 
+      @@question_number = @@question_number + 1
+      question_number = @@question_number
+    else
+      question_number = nil
+    end
     # build and set context
     text = args[0] || "Question"
     context[:question] = context[:survey_section].questions.build({
       :context_reference => context,
+      :question_number => question_number,
       :question_group => context[:question_group],
       :reference_identifier => reference_identifier,
       :text => text,
