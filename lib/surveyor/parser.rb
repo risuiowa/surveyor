@@ -206,9 +206,13 @@ module SurveyorParserQuestionGroupMethods
     clear(context)
 
     # build and set context
+    debugger
     self.attributes = ({
       :text => args[0] || "Question Group",
-      :display_type => (original_method =~ /grid|repeater/ ? original_method : "default")}.merge(args[1] || {}))
+      :display_type => (original_method =~ /grid|repeater/ ? original_method : "default"),
+      :display_order => context[:survey_section].questions.size+1,
+      :survey_section => context[:survey_section]
+    }.merge(args[1] || {}))
     context[:question_group] = self
   end
   def clear(context)
@@ -306,7 +310,7 @@ module SurveyorParserDependencyMethods
       :dependency_condition ].each{|k| context.delete k}
 
     # build and set context
-    self.attributes = (args[0] || {})
+    self.attributes = (args[0] || {}).merge({:survey_section => context[:survey_section]})
     if context[:question]
       context[:dependency] = context[:question].dependency = self
     elsif context[:question_group]
