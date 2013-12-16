@@ -206,7 +206,6 @@ module SurveyorParserQuestionGroupMethods
     clear(context)
 
     # build and set context
-    debugger
     self.attributes = ({
       :text => args[0] || "Question Group",
       :display_type => (original_method =~ /grid|repeater/ ? original_method : "default"),
