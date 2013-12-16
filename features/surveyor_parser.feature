@@ -210,7 +210,7 @@ Feature: Survey parser
     And question "copd_sh_1ba" should have a dependency with rule "E"
 
   Scenario: Parsing dependencies on questions inside of a group
-    Given the survey
+    Given I parse
     """
       survey "Phone Screen Questions" do
         section "Phone Screen" do
@@ -250,7 +250,7 @@ Feature: Survey parser
     And 2 dependencies should depend on question groups
 
   Scenario: Parsing dependencies with "a"
-    Given the survey
+    Given I parse
     """
       survey "Dependencies with 'a'" do
         section "First" do
@@ -274,7 +274,7 @@ Feature: Survey parser
       | A        |
 
   Scenario: Parsing dependencies with "q"
-    Given the survey
+    Given I parse
     """
       survey "Dependencies with 'q'" do
         section "First" do
@@ -297,8 +297,9 @@ Feature: Survey parser
       | rule_key |
       | A        |
 
+  @quiz
   Scenario: Parsing a quiz
-    Given the survey
+    Given I parse
     """
       survey "Quiz time" do
         section "First" do
@@ -309,4 +310,195 @@ Feature: Survey parser
         end
       end
     """
-    Then there should be 1 question with a correct answer
+    Then the question "the_answer" should have correct answer "adams"
+
+  @quiz
+  Scenario: Parsing a quiz for #365
+  Given I parse
+  """
+    survey "Arithmetic" do
+      section "Addtion" do
+        q_1 "What is one plus one?", :pick => :one, :correct => "2"
+        a_1 "1"
+        a_2 "2"
+        a_3 "3"
+        a_4 "4"
+
+        q_2 "What is five plus one?", :pick => :one, :correct => "6"
+        a_5 "five"
+        a_6 "six"
+        a_7 "seven"
+        a_8 "eight"
+      end
+    end
+  """
+  Then the question "1" should have correct answer "2"
+  Then the question "2" should have correct answer "6"
+
+  Scenario: Parsing typos in blocks
+    Given the survey
+    """
+      survey "Basics" do
+        sectionals "Typo" do
+        end
+      end
+
+    """
+    Then the parser should fail with "\"sectionals\" is not a surveyor method."
+
+  Scenario: Parsing bad references
+    Given the survey
+    """
+      survey "Refs" do
+        section "Bad" do
+          q_watch "Do you watch football?", :pick => :one
+          a_1 "Yes"
+          a_2 "No"
+
+          q "Do you like the replacement refs?", :pick => :one
+          dependency :rule => "A or B"
+          condition_A :q_1, "==", :a_1
+          condition_B :q_watch, "==", :b_1
+          a "Yes"
+          a "No"
+        end
+      end
+
+    """
+    Then the parser should fail with "Bad references: q_1; q_1, a_1; q_watch, a_b_1"
+
+  Scenario: Parsing repeated references
+    Given the survey
+    """
+      survey "Refs" do
+        section "Bad" do
+          q_watch "Do you watch football?", :pick => :one
+          a_1 "Yes"
+          a_1 "No"
+
+          q_watch "Do you watch baseball?", :pick => :one
+          a_yes "Yes"
+          a_no  "No"
+
+          q "Do you like the replacement refs?", :pick => :one
+          dependency :rule => "A or B"
+          condition_A :q_watch, "==", :a_1
+          a "Yes"
+          a "No"
+        end
+      end
+    """
+    Then the parser should fail with "Duplicate references: q_watch, a_1; q_watch"
+
+  Scenario: Parsing with Rails validation errors
+    Given the survey
+    """
+      survey do
+        section "Usage" do
+          q_PLACED_BAG_1 "Is the bag placed?", :pick => :one
+          a_1 "Yes"
+          a_2 "No"
+          a_3 "Refused"
+        end
+      end
+    """
+    Then the parser should fail with "Survey not saved: Title can't be blank"
+
+  Scenario: Parsing bad shortcuts
+    Given the survey
+    """
+      survey "shortcuts" do
+        section "Bad" do
+          quack "Do you like ducks?", :pick => :one
+          a_1 "Yes"
+          a_1 "No"
+        end
+      end
+    """
+    Then the parser should fail with "\"quack\" is not a surveyor method."
+
+  Scenario: Clearing grid answers
+    Given I parse
+    """
+      survey "Grids" do
+        section "Leaking" do
+          grid "How would you rate the following?" do
+            a "bad"
+            a "neutral"
+            a "good"
+            q "steak" , :pick => :one
+            q "chicken", :pick => :one
+            q "fish", :pick => :one
+          end
+          grid "How do you feel about the following?" do
+            a "sad"
+            a "indifferent"
+            a "happy"
+            q "births" , :pick => :one
+            q "weddings", :pick => :one
+            q "funerals", :pick => :one
+          end
+        end
+      end
+    """
+    Then there should be 18 answers with:
+      | text        | display_order |
+      | bad         | 0             |
+      | neutral     | 1             |
+      | good        | 2             |
+      | sad         | 0             |
+      | indifferent | 1             |
+      | happy       | 2             |
+
+  Scenario: Parsing mandatory questions
+    Given I parse
+    """
+      survey "Chores", :default_mandatory => true do
+        section "Morning" do
+          q "Did you take out the trash", :pick => :one
+          a "Yes"
+          a "No"
+
+          q "Did you do the laundry", :pick => :one
+          a "Yes"
+          a "No"
+
+          q "Optional comments", :is_mandatory => false
+          a :string
+        end
+      end
+    """
+    And there should be 3 questions with:
+      | text                       | is_mandatory |
+      | Did you take out the trash | true         |
+      | Did you do the laundry     | true         |
+      | Optional comments          | false        |
+
+  @javascript
+  Scenario: Parsing dependencies with "question_" and "answer_" syntax
+    Given I parse
+    """
+      survey "Days" do
+        section "Fridays" do
+          q_is_it_friday "Is it Friday?", :pick => :one
+          a_yes "Yes"
+          a_no  "No"
+
+          label "woot!"
+          dependency :rule => "A"
+          condition_A :question_is_it_friday, "==", :answer_yes
+        end
+      end
+    """
+    Then there should be 1 dependency with:
+      | rule |
+      | A    |
+    And there should be 1 resolved dependency_condition with:
+      | rule_key |
+      | A        |
+    When I go to the surveys page
+    And I start the "Days" survey
+    Then the question "woot!" should be hidden
+    And I choose "Yes"
+    Then the question "woot!" should be triggered
+

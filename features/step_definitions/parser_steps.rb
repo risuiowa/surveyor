@@ -1,8 +1,26 @@
-Given /^I parse$|^the survey$/ do |string|
+Given /^I parse$/ do |string|
   Surveyor::Parser.parse(string)
 end
 
-Given /^I parse redcap file "([^"]*)"$/ do |name|
+Given /^the survey$/ do |string|
+  @survey_string = string
+end
+
+Then /^the parser should fail with "(.*)"$/ do |error_message|
+  lambda { Surveyor::Parser.parse(@survey_string) }.should raise_error(Surveyor::ParserError, /#{error_message}/)
+end
+
+Given /^the questions?$/ do |q_string|
+  Surveyor::Parser.parse(<<-SURVEY)
+    survey "Some questions for you" do
+      section "All the questions" do
+        #{q_string}
+      end
+    end
+  SURVEY
+end
+
+Given /^I parse redcap file "(.*)"$/ do |name|
   Surveyor::RedcapParser.parse File.read(File.join(Rails.root, '..', 'features', 'support', name)), name
 end
 
@@ -32,7 +50,12 @@ Then /^there should be (\d+) question(?:s?) with:$/ do |x, table|
   table.hashes.each do |hash|
     hash["reference_identifier"] = nil if hash["reference_identifier"] == "nil"
     hash["custom_class"] = nil if hash["custom_class"] == "nil"
-    Question.find(:first, :conditions => hash).should_not be_nil
+    if hash.has_key?("is_mandatory")
+      hash["is_mandatory"] = (hash["is_mandatory"] == "true" ? true : (hash["is_mandatory"] == "false" ? false : hash["is_mandatory"]))
+    end
+    result = Question.find(:first, :conditions => hash)
+    puts hash if result.nil?
+    result.should_not be_nil
   end
 end
 

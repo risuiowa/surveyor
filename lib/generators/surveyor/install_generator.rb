@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'rails/generators'
 require 'surveyor/helpers/asset_pipeline'
 
@@ -36,6 +37,7 @@ module Surveyor
       add_version_to_surveys
       add_unique_index_on_access_code_and_version_in_surveys
       update_blank_versions_on_surveys
+      api_ids_must_be_unique
     )
 
     def readme

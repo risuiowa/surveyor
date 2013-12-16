@@ -4,7 +4,7 @@ Feature: Survey creation
   So that I can get paid
 
   Scenario: Creating basic questions
-    Given the survey
+    Given I parse
     """
       survey "Favorites" do
         section "Colors" do
@@ -38,7 +38,7 @@ Feature: Survey creation
       | brown  |
 
   Scenario: Creating default answers
-    Given the survey
+    Given I parse
     """
       survey "Favorites" do
         section "Foods" do
@@ -68,8 +68,9 @@ Feature: Survey creation
       | string_value    |
       | chicken |
 
+  @quiz
   Scenario: Creating, it's quiz time
-    Given the survey
+    Given I parse
     """
       survey "Favorites" do
         section "Foods" do
@@ -83,7 +84,7 @@ Feature: Survey creation
     Then question "1" should have correct answer "oink"
 
   Scenario: Creating custom css class
-    Given the survey
+    Given I parse
     """
       survey "Movies" do
         section "First" do
@@ -105,7 +106,7 @@ Feature: Survey creation
     And the element "input[type='text'].other_other_custom_class" should exist
 
   Scenario: Creating a pick one question with an option for other
-    Given the survey
+    Given I parse
     """
       survey "Favorites" do
         section "Foods" do
@@ -124,7 +125,7 @@ Feature: Survey creation
     | bacon |
 
   Scenario: Creating a repeater with a dropdown
-    Given the survey
+    Given I parse
     """
       survey "Movies" do
         section "Preferences" do
@@ -142,7 +143,7 @@ Feature: Survey creation
 
   # Issue 251 - text field with checkbox
   Scenario: Creating a group with a dropdown
-    Given the survey
+    Given I parse
     """
       survey "All Holidays" do
         section "Favorites" do
@@ -159,7 +160,7 @@ Feature: Survey creation
     Then a dropdown should exist with the options "Christmas, New Year, March 8th"
 
   Scenario: Creating another pick one question with an option for other
-    Given the survey
+    Given I parse
     """
       survey "Favorites" do
         section "Foods" do
@@ -179,7 +180,7 @@ Feature: Survey creation
     | shrimp |
 
   Scenario: Creating checkboxes with text area
-    Given the survey
+    Given I parse
     """
       survey "Websites" do
         section "Search engines" do
@@ -195,7 +196,7 @@ Feature: Survey creation
     And there should be 3 text areas
 
   Scenario: Creating double letter rule keys
-    Given the survey
+    Given I parse
     """
       survey "Doubles" do
         section "Two" do
@@ -229,7 +230,7 @@ Feature: Survey creation
     Then the question "Do you want to be part of an SNL skit?" should be triggered
 
   Scenario: Creating and changing dropdowns
-    Given the survey
+    Given I parse
     """
       survey "Drop" do
         section "Like it is hot" do
@@ -258,7 +259,7 @@ Feature: Survey creation
   # Issue 234 - text field with checkbox
   @javascript
   Scenario: Creating a question with an option checkbox for other and text input
-    Given the survey
+    Given I parse
     """
       survey "Favorite Cuisine" do
         section "Foods" do
@@ -271,14 +272,13 @@ Feature: Survey creation
       end
     """
     When I start the "Favorite Cuisine" survey
-    And I wait 2 seconds
     And I change "r_4_string_value" to "thai"
     Then the "other" checkbox should be checked
 
   # Issue 234 - empty text field with checkbox
   @javascript
   Scenario: Creating a question with an option checkbox for other and an empty text input
-    Given the survey
+    Given I parse
     """
       survey "Favorite Cuisine" do
         section "Foods" do
@@ -291,14 +291,13 @@ Feature: Survey creation
       end
     """
     When I start the "Favorite Cuisine" survey
-    And I wait 2 seconds
     And I change "r_4_string_value" to ""
     Then the "other" checkbox should not be checked
 
   # Issue 234 - text field with radio buttons
   @javascript
    Scenario: Creating a question with an option radio button for other and text input
-    Given the survey
+    Given I parse
     """
       survey "Favorite Cuisine" do
         section "Foods" do
@@ -311,14 +310,13 @@ Feature: Survey creation
       end
     """
     When I start the "Favorite Cuisine" survey
-    And I wait 2 seconds
     And I change "r_1_string_value" to "thai"
     Then the "other" radiobutton should be checked
 
   # Issue 234 - empty text field with radio buttons
   @javascript
   Scenario: Creating another question with an option radio button for other and text input
-    Given the survey
+    Given I parse
     """
       survey "Favorite Cuisine" do
         section "Foods" do
@@ -331,16 +329,15 @@ Feature: Survey creation
       end
     """
     When I start the "Favorite Cuisine" survey
-    And I wait 2 seconds
     And I change "r_1_string_value" to ""
     Then the "other" radiobutton should not be checked
 
 
   # Issue 259 - substitution of the text with Mustache
-  @javascript
+  @javascript @mustache
   Scenario: Creating a question with an mustache syntax
     Given I have survey context of "FakeMustacheContext"
-    Given the survey
+    Given I parse
     """
       survey "Overall info" do
         section "Group of questions" do
@@ -357,7 +354,6 @@ Feature: Survey creation
       end
     """
     When I start the "Overall info" survey
-    And I wait 5 seconds
     Then I should see "Information on Santa Claus"
     And I should see "Answer all you know on Santa Claus"
     And I should see "Santa Claus does not work for Northwestern!"
@@ -368,9 +364,39 @@ Feature: Survey creation
     And I should see "Santa Claus lives on South Pole"
     And I should see "Santa Claus doesn't exist"
 
+  # Issue 296 - Mustache rendering doesn't work with simple hash contexts
+  @javascript @mustache
+  Scenario: Creating a question with an mustache syntax
+    Given I have a simple hash context
+    Given I parse
+    """
+      survey "Overall info" do
+        section "Group of questions" do
+          group "Information on {{name}}?", :help_text => "Answer all you know on {{name}}" do
+            label "{{name}} does not work for {{site}}!", :help_text => "Make sure you sure {{name}} doesn't work for {{site}}"
+
+            q "Where does {{name}} live?", :pick => :one,
+            :help_text => "If you don't know where {{name}} lives, skip the question"
+            a "{{name}} lives on North Pole"
+            a "{{name}} lives on South Pole"
+            a "{{name}} doesn't exist"
+          end
+        end
+      end
+    """
+    When I start the "Overall info" survey
+    Then I should see "Information on Moses"
+    And I should see "Answer all you know on Moses"
+    And I should see "Moses does not work for Northwestern!"
+    And I should see "Make sure you sure Moses doesn't work for Northwestern"
+    And I should see "Where does Moses live?"
+    And I should see "If you don't know where Moses lives, skip the question"
+    And I should see "Moses lives on North Pole"
+    And I should see "Moses lives on South Pole"
+    And I should see "Moses doesn't exist"
 
   Scenario: Creating and saving grids
-    Given the survey
+    Given I parse
     """
       survey "Grid" do
         section "One" do
@@ -397,31 +423,8 @@ Feature: Survey creation
     And I press "One"
     Then there should be 1 response with answer "1"
 
-  # Issue #339
-  @javascript
-  Scenario: Immediately saving grid responses
-    Given the survey
-    """
-      survey "Grid" do
-        section "One" do
-          grid "Tell us how often do you cover these each day" do
-            a "1"
-            a "2"
-            a "3"
-            q "Head", :pick => :one
-            q "Knees", :pick => :one
-            q "Toes", :pick => :one
-          end
-        end
-      end
-    """
-    When I start the "Grid" survey
-    And I choose "3"
-    And I wait 1 second
-    Then there should be 1 response with answer "3"
-
   Scenario: Creating dates
-    Given the survey
+    Given I parse
     """
       survey "When" do
         section "One" do
@@ -475,8 +478,8 @@ Feature: Survey creation
     Then the "When phone" field should contain "2011-02-15 17:00:00"
 
   @javascript
-  Scenario: Creating a date
-    Given the survey
+  Scenario: Creating a date using the JS datepicker
+    Given I parse
     """
       survey "When" do
         section "One" do
@@ -486,14 +489,15 @@ Feature: Survey creation
       end
     """
     When I start the "When" survey
-    And I click "Give me a date"
-    And I wait 1 seconds
-    And I follow today's date
-    And I press "Click here to finish"
-    Then there should be a datetime response with today's date
+     And I click "Give me a date"
+     And I select "May" as the datepicker's month
+     And I select "2013" as the datepicker's year
+     And I follow "18"
+     And I press "Click here to finish"
+    Then there should be a date response with value "2013-05-18"
 
   Scenario: Creating images
-    Given the survey
+    Given I parse
     """
       survey "Images" do
         section "One" do
@@ -509,7 +513,7 @@ Feature: Survey creation
 
   @javascript
   Scenario: Creating and unchecking checkboxes
-    Given the survey
+    Given I parse
     """
       survey "Travels" do
         section "Countries" do
@@ -527,35 +531,23 @@ Feature: Survey creation
       end
     """
     When I go to the surveys page
-    And I wait 1 seconds
     And I start the "Travels" survey
-    And I wait 1 seconds
     Then there should be 3 checkboxes
-    And I wait 1 seconds
     When I check "Singapore"
-    And I wait 1 seconds
     And I press "Activities"
-    And I wait 1 seconds
     And I press "Countries"
-    And I wait 1 seconds
     Then the "Singapore" checkbox should be checked
-    And I wait 1 seconds
     When I uncheck "Singapore"
-    And I wait 1 seconds
     And I press "Activities"
-    And I wait 1 seconds
     And I press "Countries"
-    And I wait 1 seconds
     Then the "Singapore" checkbox should not be checked
     When I check "Singapore"
-    And I wait 1 seconds
     Then 1 responses should exist
     When I uncheck "Singapore"
-    And I wait 1 seconds
     Then 0 responses should exist
 
   Scenario: Accessing outdated survey
-    Given the survey
+    Given I parse
     """
       survey "Travels" do
         section "Everything" do
@@ -566,7 +558,7 @@ Feature: Survey creation
         end
       end
     """
-    And the survey
+    And I parse
     """
       survey "Travels" do
         section "Countries" do
@@ -578,7 +570,6 @@ Feature: Survey creation
       end
     """
     When I go to the surveys page
-    And I wait 1 seconds
     And I press "Take it"
     Then I should see "Ireland"
     And I should not see "Italy"
@@ -591,7 +582,7 @@ Feature: Survey creation
 
   # Issue 236 - ":text"- field doesn't show up in the multi-select questions
   Scenario: Pick one and pick any with text areas
-    Given the survey
+    Given I parse
     """
       survey "Pick plus text" do
         section "Examples" do
@@ -607,13 +598,12 @@ Feature: Survey creation
       end
     """
     When I go to the surveys page
-    And I wait 1 seconds
     And I press "Take it"
     Then I should see 3 textareas on the page
 
   # Issue 207 - Create separate fields for date and time
   Scenario: Pick one and pick any with dates
-  Given the survey
+  Given I parse
   """
     survey "Complex date survey" do
       section "Date questions with pick one and pick any" do
@@ -631,7 +621,6 @@ Feature: Survey creation
     end
   """
   When I go to the surveys page
-  And I wait 1 seconds
   And I press "Take it"
   Then I should see 1 "date" input on the page
   And I should see 1 "time" input on the page
@@ -639,7 +628,7 @@ Feature: Survey creation
 
   # Issue #251 - Dropdowns inside of group display as radio buttons
   Scenario: Dropdown within a group
-  Given the survey
+  Given I parse
   """
     survey "Dropdowns" do
       section "Location" do
@@ -665,3 +654,88 @@ Feature: Survey creation
   When I go to the surveys page
   And I press "Take it"
   Then I should see 1 select on the page
+
+  # Issue #336 :is_exclusive doesn't disable other answers that are tagged as :is_exclusive
+  @javascript
+  Scenario: multiple exclusive checkboxes
+    Given I parse
+    """
+      survey "Heat" do
+        section "Types" do
+          q_heat2 "Are there any other types of heat you use regularly during the heating season
+           to heat your home? ", :pick => :any
+           a_1 "Electric"
+           a_2 "Gas - propane or LP"
+           a_3 "Oil"
+           a_4 "Wood"
+           a_5 "Kerosene or diesel"
+           a_6 "Coal or coke"
+           a_7 "Solar energy"
+           a_8 "Heat pump"
+           a_9 "No other heating source", :is_exclusive => true
+           a_neg_5 "Other"
+           a_neg_1 "Refused", :is_exclusive => true
+           a_neg_2 "Don't know", :is_exclusive => true
+        end
+      end
+    """
+    When I start the "Heat" survey
+     And I click "No other heating source"
+    Then the checkbox for "Refused" should be disabled
+     And the checkbox for "Don't know" should be disabled
+    When I uncheck "No other heating source"
+    Then the checkbox for "Refused" should be enabled
+    When I check "Electric"
+    Then the checkbox for "Refused" should be enabled
+    When I check "Refused"
+    Then the checkbox for "Electric" should be disabled
+     And the checkbox for "Don't know" should be disabled
+
+  # #197 - Add a hidden field type, don't show hidden questions and groups in the DOM
+  #        don't use up question numbers on them either. custom class "hidden" doesn't
+  #        do anything until you add your own css to hide it
+  Scenario: hidden questions for injecting data
+    Given I parse
+    """
+      survey "Sesame Street" do
+        section "The Count" do
+          q_name "What is your name?", :display_type => :hidden
+          a :string, :help_text => "(e.g. Count Von Count)"
+
+          group "Friends", :display_type => :hidden do
+            q "Who are your friends?"
+            a :string
+          end
+
+          label "AH AH AH AH AH!"
+
+          q_numbers "What is your favorite number?", :pick => :one, :custom_class => "hidden"
+          a "One"
+          a "Two"
+          a "Three!"
+        end
+      end
+    """
+    When I start the "Sesame Street" survey
+    Then I should see "AH AH AH AH AH!"
+      And I should see "1) What is your favorite number?"
+      And I should not see "What is your name?"
+
+  @numbers
+  Scenario: hidden numbers
+    Given I parse
+    """
+      survey "Alpha" do
+        section "A-C" do
+          q "Aligator"
+          q "Barber"
+          q "Camel"
+        end
+      end
+    """
+      And I replace question numbers with letters
+    When I start the "Alpha" survey
+    Then I should see "A. Aligator"
+      And I should see "B. Barber"
+      And I should see "C. Camel"
+

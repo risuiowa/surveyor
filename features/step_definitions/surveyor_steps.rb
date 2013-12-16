@@ -4,6 +4,31 @@ When /^I start the "([^"]*)" survey$/ do |name|
     Then I should see "#{name}\"
     When I press "Take it"
   }
+  @survey_code       = current_path.split("/")[2] # /surveys/:survey_code/:response_set_code/take
+  @response_set_code = current_path.split("/")[3] # /surveys/:survey_code/:response_set_code/take
+end
+
+When /^I start the survey$/ do
+  steps %Q{
+    When I go to the surveys page
+     And I press "Take it"
+  }
+  @survey_code       = current_path.split("/")[2] # /surveys/:survey_code/:response_set_code/take
+  @response_set_code = current_path.split("/")[3] # /surveys/:survey_code/:response_set_code/take
+end
+
+# When I fill in the (nth) (string) for "(ref_id)" with "(value to fill)"
+When /^I fill in the (\d+[a-z]{0,2} )?(\w+) for "([^"]+)" with "([^"]+)"$/ do |index, type, answer_reference_id, value|
+  answer = Answer.where(:reference_identifier => answer_reference_id).first
+  fail "No answer with ref ID #{answer_reference_id.inspect}" unless answer
+
+  i = index ? index.to_i - 1 : 0
+
+  answer_input_id = page.all("input[@value='#{answer.id}']").
+    select { |x| x['id'] =~ /answer_id/ }[i]['id']
+  ordinal = answer_input_id.scan(/r_(\d+)/).first.first
+  value_input_id = "r_#{ordinal}_#{type}_value"
+  page.fill_in(value_input_id, :with => value)
 end
 
 Then /^there should be (\d+) response set with (\d+) responses? with:$/ do |rs_num, r_num, table|
@@ -67,7 +92,12 @@ end
 
 Then /^the question "([^"]*)" should be triggered$/ do |text|
   q = Question.find_by_text(text)
-  page.should have_selector %(fieldset#q_#{q.id}[class!="q_hidden"])
+  page.should_not have_css %(fieldset#q_#{q.id}.q_hidden)
+end
+
+Then /^the question "(.*?)" should be hidden$/ do |text|
+  q = Question.find_by_text(text)
+  page.should have_css %(fieldset#q_#{q.id}.q_hidden)
 end
 
 Then /^there should be (\d+) response with answer "([^"]*)"$/ do |count, answer_text|
@@ -75,63 +105,90 @@ Then /^there should be (\d+) response with answer "([^"]*)"$/ do |count, answer_
   Response.find_by_answer_id(Answer.find_by_text(answer_text)).should_not be_blank
 end
 
-Then /^there should be a datetime response with today's date$/ do
-  # Response.datetime_value returns ActiveSupport::TimeWithZone
-  # so we call .to_date on it for the comparison with Date.today
-  Response.all.one?{|x| x.datetime_value.to_date == Date.today}.should be_true
+When /^I choose row (\d+), column (\d+) of the grid$/ do |row, col|
+  find(".g_grid").find("tr:nth-child(#{row.to_i + 1})").find("td:nth-child(#{col.to_i + 1})").find("input").set(true)
+end
+
+Then /^there should (not )?be a (\w+ )?response(?: for answer "([^"]+)")?(?: with value "([^"]+)")?(?: on question "([^"]+)")?$/ do |neg, type, answer_reference_id, value, question_reference_id|
+  conditions = []
+  values = []
+  expected_count = neg.blank? ? 1 : 0
+  if type
+    attribute = case type.strip
+                when 'date'
+                  'datetime_value'
+                when 'time'
+                  'datetime_value'
+                else
+                  "#{type.strip}_value"
+                end
+    if value
+      case type.strip
+      when 'date'
+        # Work around deficient SQLite date handling
+        conditions << "date(#{attribute}) = date(?)"
+        values << value
+      else
+        conditions << "#{attribute} = ?"
+        values << value
+      end
+    else
+      conditions << "#{attribute} IS NOT NULL"
+    end
+  end
+
+  if question_reference_id
+    question = Question.where(:reference_identifier => question_reference_id).first
+    fail "No question with ref ID #{question_reference_id}" unless question
+    conditions << 'question_id = ?'
+    values << question
+  end
+
+  if answer_reference_id
+    a_conds = { :reference_identifier => answer_reference_id }
+    if question
+      a_conds[:question_id] = question
+    end
+    answer = Answer.where(a_conds).first
+    fail "No answer with ref ID #{answer_reference_id}" unless answer
+    conditions << 'answer_id = ?'
+    values << answer
+  end
+
+  Response.where(conditions.join(' AND '), *values).count.should == expected_count
 end
 
 Then /^I should see the image "([^"]*)"$/ do |src|
   page.should have_selector %(img[src^="#{src}"])
 end
 
+Then /^I click elsewhere$/ do
+  page.find('.survey_title').click
+end
+
 Then /^(\d+) responses should exist$/ do |response_count|
   Response.count.should == response_count.to_i
 end
 
-Then /^the json for "([^"]*)" should be$/ do |title, string|
-  visit "/surveys/#{Survey.to_normalized_string(title)}.json"
-  puts page.find('body').text
-  Surveyor::Common.equal_json_excluding_wildcards(page.find('body').text, string).should == true
+## JSON
+
+def last_json
+  page.find('body').text
 end
 
-Then /^the json for "([^"]*)" version "([^"]*)" should be$/ do |title, version, string|
-  visit "/surveys/#{Survey.to_normalized_string(title)}.json?survey_version=#{version}"
-  puts page.find('body').text
-  Surveyor::Common.equal_json_excluding_wildcards(page.find('body').text, string).should == true
+When /^I visit "(.*?)"$/ do |path|
+  visit path
 end
 
-Then /^the json for the ([^"]*) response set for "([^"]*)" should be$/ do |order, title, string|
-  response_sets = ResponseSet.joins(:survey).where(:surveys => { :title => title }).order(:updated_at)
-  response_sets.should_not be_empty
-
-  case order
-  when "last"
-    response_set = response_sets.last
-  when "first"
-    response_set = response_sets.first
-  end
-  response_set.should_not be_nil
-  visit "/surveys/#{response_set.survey.access_code}/#{response_set.access_code}.json"
-  Surveyor::Common.equal_json_excluding_wildcards(page.find('body').text, string).should == true
+Then /^I export the response set$/ do
+  visit "/surveys/#{@survey_code}/#{@response_set_code}.json"
 end
 
-Then /^the json for the ([^"]*) response set for "(.*?)" should include '(.*?)'$/ do |order, title, string|
-  response_sets = ResponseSet.joins(:survey).where(:surveys => { :title => title }).order(:updated_at)
-  response_sets.should_not be_empty
-
-  case order
-  when "last"
-    response_set = response_sets.last
-  when "first"
-    response_set = response_sets.first
-  end
-  response_set.should_not be_nil
-  visit "/surveys/#{response_set.survey.access_code}/#{response_set.access_code}.json"
-
-  page.find('body').text.include?(string).should == true
+Then /^the JSON response at "(.*?)" should correspond to an answer with text "(.*?)"$/ do |path, text|
+  last_json.should be_json_eql(JsonSpec.remember("\"#{Answer.find_by_text(text).api_id}\"")).at_path(path)
 end
 
+## Hidden and shown elements
 
 Then /the element "([^\"]*)" should be hidden$/ do |selector|
   wait_until do
@@ -148,7 +205,10 @@ Then /the element "([^\"]*)" should not be hidden$/ do |selector|
     (its_not_hidden && its_in_dom).should be_true
   end
 end
-Given /^I have survey context of "([^"]*)"$/ do |context|
+
+## Context and substitution with mustache
+
+Given /^I have survey context of "(.*)"$/ do |context|
   class SurveyorController < ApplicationController
     require 'mustache'
     class FakeMustacheContext < ::Mustache
@@ -165,11 +225,27 @@ Given /^I have survey context of "([^"]*)"$/ do |context|
   end
 end
 
-When /^I follow today's date$/ do
-  steps %Q{
-    When I follow "#{Date.today.strftime('%d').to_i}"
-  }
+Given /^I have a simple hash context$/ do
+  class SurveyorController < ApplicationController
+    def render_context
+      {:name => "Moses", :site => "Northwestern"}
+    end
+  end
 end
+
+Given /^I replace question numbers with letters$/ do
+  module SurveyorHelper
+    include Surveyor::Helpers::SurveyorHelperMethods
+    def next_question_number(question)
+      @letters ||= ("A".."Z").to_a
+      @n ||= 25
+      "<span class='qnum'>#{@letters[(@n += 1)%26]}. </span>"
+    end
+  end
+end
+
+
+## Various input elements
 
 Then /^I should see (\d+) textareas on the page$/ do |i|
   page.has_css?('textarea', :count => i)
@@ -181,4 +257,30 @@ end
 
 Then /^I should see (\d+) select on the page$/ do |i|
   page.has_css?("select", :count => i)
+end
+
+Then /^the checkbox for "(.*?)" should be (dis|en)abled$/ do |text, dis_or_en|
+  a = Answer.find_by_text(text)
+  a.should_not be_nil
+  element = find("input[value='#{a.id}']")
+  if dis_or_en == 'dis'
+    element['disabled'].should == 'true'
+  else
+    [nil, 'false'].should include(element['disabled'])
+  end
+end
+
+# see support/simultaneous_ajax.rb
+Then /^I wait for things to settle out( longer)?$/ do |longer|
+  if @simultaneous_ajax
+    Capybara.timeout(longer ? 120 : 10, page.driver, "waiting for all AJAX requests timed out") do
+      page.evaluate_script("window.surveyorIntegratedTestsRequestsOutstanding <= 0")
+    end
+  end
+end
+
+## quizzes
+
+Then /^the question "(.*?)" should have correct answer "(.*?)"$/ do |q, a|
+  Question.find_by_reference_identifier(q).correct_answer.reference_identifier.should == a
 end

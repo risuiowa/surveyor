@@ -1,11 +1,14 @@
-survey "Kitchen Sink survey" do
+# encoding: UTF-8
+# Question#is_mandatory is now false by default. The default_mandatory option allows you to set
+#   is_mandatory for all questions in a survey.
+survey "Kitchen Sink survey", :default_mandatory => false do
 
   section "Basic questions" do
     # A label is a question that accepts no answers
     label "These questions are examples of the basic supported input types"
 
     # A basic question with radio buttons
-    question_1 "What is your favorite color?", :pick => :one
+    question "What is your favorite color?", :pick => :one
     answer "red"
     answer "blue"
     answer "green"
@@ -13,7 +16,10 @@ survey "Kitchen Sink survey" do
     answer :other
 
     # A basic question with checkboxes
-    # "question" and "answer" may be abbreviated as "q" and "a"
+    # The "question" and "answer" methods may be abbreviated as "q" and "a".
+    # Append a reference identifier (a short string used for dependencies and validations) using the "_" underscore.
+    # Question reference identifiers must be unique within a survey.
+    # Answer reference identifiers must be unique within a question
     q_2 "Choose the colors you don't like", :pick => :any
     a_1 "red"
     a_2 "blue"
@@ -22,8 +28,7 @@ survey "Kitchen Sink survey" do
     a :omit
 
     # A dependent question, with conditions and rule to logically join them
-    # the question's reference identifier is "2a", and the answer's reference_identifier is "1"
-    # question reference identifiers used in conditions need to be unique on a survey for the lookups to work
+    # If the conditions, logically joined into the rule, are met, then the question will be shown.
     q_2a "Please explain why you don't like this color?"
     a_1 "explanation", :text, :help_text => "Please give an explanation for each color you don't like"
     dependency :rule => "A or B or C or D"
@@ -32,10 +37,8 @@ survey "Kitchen Sink survey" do
     condition_C :q_2, "==", :a_3
     condition_D :q_2, "==", :a_4
 
-    # A dependant question demonstrating the count operator. The
-    # dependency condition checks the answer count for the referenced question.
-    # It understands conditions of the form count> count< count>= count<=
-    # count!=
+    # The count operator checks how many responses exist for the referenced question.
+    # It understands conditions of the form: count== count!= count> count< count>= count<=
     q_2b "Please explain why you dislike so many colors?"
     a_1 "explanation", :text
     dependency :rule => "Z"
@@ -61,11 +64,29 @@ survey "Kitchen Sink survey" do
     dependency :rule => "A"
     condition_A :q_montypython5, "==", {:string_value => "What do you mean? An African or European swallow?", :answer_reference => "1"}
 
+    q_cooling_1 "How do you cool your home?", :pick => :one
+    a_1 "Fans"
+    a_2 "Window AC"
+    a_3 "Central AC"
+    a_4 "Passive"
+
+    # When using !=, also use count>0 if you want to make sure the user responds
+    q_cooling_2 "How much does it cost to run your non-passive cooling solutions? (This question hidden until you respond 'How do you cool your home?')"
+    dependency :rule => "A and B"
+    condition_A :q_cooling_1, "!=", :a_4
+    condition_B :q_cooling_1, "count>0"
+    a_1 "$", :float
+
+    # Using != alone means the dependent question is shown by default
+    label "Please consider passive cooling solutions (This question always shown, unless you respond 'Passive')"
+    dependency :rule => "A"
+    condition_A :q_cooling_1, "!=", :a_4
+
     # Surveys, sections, questions, groups, and answers all take the following reference arguments
-    # :reference_identifier   # usually from paper
-    # :data_export_identifier # data export
-    # :common_namespace       # maping to a common vocab
-    # :common_identifier      # maping to a common vocab
+    # :reference_identifier   # used for parsing references, usually derived from the paper version
+    # :data_export_identifier # used for data export
+    # :common_namespace       # maping to a common vocabulary - the namespace
+    # :common_identifier      # maping to a common vocabulary - the identifier within the namespace
     q "Get me started on an improv sketch", :reference_identifier => "improv_start", :data_export_identifier => "i_s", :common_namespace => "sketch comedy questions", :common_identifier => "get me started"
     a "who", :string
     a "what", :string
@@ -96,7 +117,7 @@ survey "Kitchen Sink survey" do
     a :date
 
     # Sliders deprecate to select boxes when javascript is off
-    # Valid Ruby code may be used to shorted repetitive tasks
+    # Valid Ruby code may be used to shorten repetitive tasks
     q "Adjust the slider to reflect your level of awesomeness", :pick => :one, :display_type => :slider
     (1..10).to_a.each{|num| a num.to_s}
 
@@ -210,6 +231,17 @@ survey "Kitchen Sink survey" do
     a "fork", :string
     a "knife", :string
     a :other, :string
+
+    q "What is your birth date?", :pick => :one
+    a "I was born on", :date
+    a "Refused"
+
+    q "At what time were you born?", :pick => :any
+    a "I was born at", :time
+    a "This time is approximate"
+
+    q "When would you like to schedule your next appointment?"
+    a :datetime
 
     q_car "Do you own a car?", :pick => :one
     a_y "Yes"

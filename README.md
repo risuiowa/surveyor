@@ -70,11 +70,11 @@ Then run:
 Generate assets, run migrations:
 
     script/rails generate surveyor:install
-    rake db:migrate
+    bundle exec rake db:migrate
 
 Try out the "kitchen sink" survey. The rake task above generates surveys from our custom survey DSL (a good format for end users and stakeholders).
 
-    rake surveyor FILE=surveys/kitchen_sink_survey.rb
+    bundle exec rake surveyor FILE=surveys/kitchen_sink_survey.rb
 
 Start up your app and visit http://localhost:3000/surveys
 
@@ -86,6 +86,54 @@ There are two other useful rake tasks:
 * `rake surveyor:unparse` exports a survey from the application into a
   file in the surveyor DSL.
 
+# Upgrading
+
+When you are ready to update to the latest version of Surveyor, just do
+
+    bundle update surveyor
+
+and you'll get the latest version that bundler thinks you can use based on the
+constraints in your Gemfile.
+
+After you've installed a new version, you should always re-run the surveyor
+generator:
+
+    script/rails generate surveyor:install
+
+This will copy over any new or updated assets and new migrations. Use your VCS'
+utilities to review what's changed, then commit the new versions.
+
+    git status
+    git diff
+    [...]
+    git add -A
+    git commit
+
+If there were new migrations, you'll want to be sure to run them before the next
+time you start your app:
+
+    bundle exec rake db:migrate
+
+Finally, review the [changelog][] entries corresponding to the versions between
+your original version and the version you've updated to. There may be changes
+which will affect your customizations. There should be hints in the changelog
+or the referenced issues for what to update when necessary.
+
+[changelog]: https://github.com/NUBIC/surveyor/blob/master/CHANGELOG.md
+
+## Following master
+
+If you are following along with pre-release versions of Surveyor using a `:git`
+source in your Gemfile, be particularly careful about reviewing migrations after
+updating Surveyor and re-running the generator. We will never change a migration
+between two released versions of Surveyor. However, we may on rare occasions
+change a migration which has been merged into master. When this happens, you'll
+need to assess the differences and decide on an appropriate course of action for
+your app.
+
+If you aren't sure what this means, we do not recommend that you deploy an app
+that's locked to surveyor master into production.
+
 # Customizing surveyor
 
 Surveyor's controller, models, and views may be customized via classes in your app/models, app/helpers and app/controllers directories. To generate a sample custom controller and layout, run:
@@ -96,7 +144,12 @@ and read surveys/EXTENDING\_SURVEYOR
 
 # The asset pipeline
 
-Surveyor is now aware of the Rails asset pipeline (http://http://guides.rubyonrails.org/asset_pipeline.html). With the asset pipeline enabled (Rails.application.config.assets.enabled == true), then the surveyor:install generator will generate app/assets/stylesheets/surveyor\_all.css and app/assets/javascripts/surveyor\_all.js manifest files and link them from the surveyor\_default layout. Assets remain in the gem and are picked up for inclusion and pre-compilation from there. The previous copy-to-application behavior still exists in the case where the asset pipeline is missing or disabled.
+Surveyor is now aware of the Rails asset pipeline (http://guides.rubyonrails.org/asset_pipeline.html). With the asset pipeline enabled `Rails.application.config.assets.enabled == true`, then the `surveyor:install` generator will generate `app/assets/stylesheets/surveyor_all.css` and `app/assets/javascripts/surveyor_all.js` manifest files and link them from the surveyor\_default layout.  Assets remain in the gem and are picked up for inclusion and pre-compilation from there if `config/environments/production.rb` is set to include surveyor assets.
+
+    # Precompile additional assets (application.js, application.css, and all non-JS/CSS are already added)
+    config.assets.precompile += %w( surveyor_all.js surveyor_all.css )
+
+The previous copy-to-application behavior still exists in the case where the asset pipeline is missing or disabled.
 
 # PDF support
 
@@ -141,6 +194,21 @@ Some key library dependencies are:
 
 A more exhaustive list can be found in the gemspec.
 
+# Support
+
+For general discussion (e.g., "how do I do this?"), please send a message to the
+[surveyor-dev][] group. This group is moderated to keep out spam; don't be
+surprised if your message isn't posted immediately.
+
+For reproducible bugs, please file an issue on the [GitHub issue
+tracker][issues]. Please include a minimal test case (a detailed description of
+how to trigger the bug in a clean rails application). If you aren't sure how to
+isolate the bug, send a message to [surveyor-dev][] with what you know and we'll
+try to help.
+
+[surveyor-dev]: https://groups.google.com/group/surveyor-dev
+[issues]: https://github.com/NUBIC/surveyor/issues
+
 # Contributing, testing
 
 To work on the code, fork this github project. Install [bundler][] if
@@ -163,5 +231,26 @@ to run the specs and
 to run the features and start writing tests!
 
 [bundler]: http://gembundler.com/
+
+## Selenium
+
+Some of Surveyor's integration tests use Selenium WebDriver and Capybara. The
+WebDriver-based tests default to running in Chrome due to an unfortunate
+[Firefox bug][FF566671]. For them to run, you'll either need:
+
+* Chrome and [chromedriver][] installed, or
+* to switch to use Firefox instead
+
+To use Firefox instead of Chrome, invoke one or more features with
+`SELENIUM_BROWSER` set in the environment:
+
+    $ SELENIUM_BROWSER=firefox bundle exec rake cucumber
+    $ SELENIUM_BROWSER=firefox bundle exec cucumber features/ajax_submissions.feature
+
+Note that when running features in Firefox, you must allow the WebDriver-driven
+Firefox to retain focus, otherwise some tests will fail.
+
+[FF566671]: https://bugzilla.mozilla.org/show_bug.cgi?id=566671
+[chromedriver]: http://code.google.com/p/selenium/wiki/ChromeDriver
 
 Copyright (c) 2008-2011 Brian Chamberlain and Mark Yoon, released under the MIT license

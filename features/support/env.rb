@@ -5,6 +5,8 @@
 # files.
 ENV["RAILS_ROOT"] ||= File.expand_path(File.dirname(__FILE__) + '/../../testbed')
 require 'cucumber/rails'
+
+
 # require File.expand_path(File.dirname(__FILE__) + '/../../testbed/config/environment.rb')
 # Capybara defaults to XPath selectors rather than Webrat's default of CSS3. In
 # order to ease the transition to Capybara we set the default here. If you'd
@@ -28,3 +30,25 @@ Capybara.default_selector = :css
 # recommended as it will mask a lot of errors for you!
 #
 ActionController::Base.allow_rescue = false
+
+# Use chrome for Selenium by default. This is because of Firefox's bug 566671
+# (https://bugzilla.mozilla.org/show_bug.cgi?id=566671): any test that relies on
+# blur or change events will not work when Firefox is in the background.
+ENV['SELENIUM_BROWSER'] ||= 'chrome'
+
+# Wait for AJAX requests to complete in selenium
+# n.b.: Capybara 2.0 will change the way this works.
+# http://groups.google.com/group/ruby-capybara/browse_thread/thread/6d955173ce413b0a/d0682d47a915dfbd
+Capybara.register_driver :selenium do |app|
+  SingleQuitSeleniumDriver.new(app, :browser => ENV['SELENIUM_BROWSER'].to_sym,
+    :resynchronize => true)
+end
+
+Before do |scenario|
+  Rails.logger.info "\n\nBeginning scenario #{scenario.file_colon_line} \"#{scenario.title}\""
+end
+
+require "json_spec/cucumber"
+JsonSpec.configure do
+  exclude_keys "id", "created_at", "updated_at", "uuid", "modified_at", "completed_at"
+end
