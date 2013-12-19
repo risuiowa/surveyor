@@ -241,9 +241,8 @@ module SurveyorParserQuestionMethods
       :validation,
       :validation_condition ].each{|k| context.delete k}
 
-
-    if(@@current_section != context[:survey_section][:data_export_identifier])
-      @@current_section = context[:survey_section][:data_export_identifier]  
+    if(@@current_section != context[:survey_section][:title])
+      @@current_section = context[:survey_section][:title]
       @@question_number = 0
     end
     # Notes on question numbering:
@@ -262,7 +261,7 @@ module SurveyorParserQuestionMethods
       args[1].delete(:force_question_number)
     end
 
-    if(force_question_number || (original_method == 'q' && !omit_question_number)) 
+    if(force_question_number || (original_method == 'q' && !omit_question_number))
       @@question_number = @@question_number + 1
       question_number = @@question_number
     else
@@ -273,6 +272,7 @@ module SurveyorParserQuestionMethods
     hash_args = args[1] || {}
     correct = hash_args.delete :correct
     self.attributes = ({
+      :question_number => question_number,
       :question_group => context[:question_group],
       :reference_identifier => reference_identifier,
       :is_mandatory => context[:default_mandatory],
