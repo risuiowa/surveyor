@@ -156,7 +156,7 @@ module Surveyor
 
     # Filters
     def get_current_user
-      @current_user = self.respond_to?(:current_user) ? self.current_user : nil
+      @current_user = self.respond_to?(:current_user, true) ? self.current_user : nil
     end
 
     def set_response_set_and_render_context
