@@ -154,9 +154,9 @@ module SurveyorParserSurveyMethods
     title = args[0]
     args[1] ||= {}
     context[:default_mandatory] = args[1].delete(:default_mandatory) || false
-    self.attributes = ({
+    self.attributes = PermittedParams.new({
       :title => title,
-      :reference_identifier => reference_identifier }.merge(args[1]))
+      :reference_identifier => reference_identifier }.merge(args[1])).survey
     context[:survey] = self
   end
   def clear(context)
@@ -174,6 +174,25 @@ module SurveyorParserSurveyMethods
 end
 
 # SurveySection model
+module SurveyorParserSurveyTranslationMethods
+  def parse_and_build(context, args, original_method, reference_identifier)
+    dir = Surveyor::Parser.options[:filename].nil? ? Dir.pwd : File.dirname(Surveyor::Parser.options[:filename])
+    # build, no change in context
+    args[0].each do |k,v|
+      case v
+      when Hash
+        trans = YAML::dump(v)
+      when String
+        trans = File.read(File.join(dir,v))
+      when :default
+        trans = YAML::dump({})
+      end
+      context[:survey].translations << self.class.new(PermittedParams.new(:locale => k.to_s, :translation => trans).survey_translation)
+    end
+  end
+end
+
+# SurveySection model
 module SurveyorParserSurveySectionMethods
   def parse_and_build(context, args, original_method, reference_identifier)
     # clear context
@@ -181,9 +200,10 @@ module SurveyorParserSurveySectionMethods
 
     # build and set context
     title = args[0]
-    self.attributes = ({
+    self.attributes = PermittedParams.new({
       :title => title,
-      :display_order => context[:survey].sections.size }.merge(args[1] || {}))
+      :reference_identifier => reference_identifier,
+      :display_order => context[:survey].sections.size }.merge(args[1] || {})).survey_section
     context[:survey].sections << context[:survey_section] = self
   end
   def clear(context)
@@ -206,12 +226,13 @@ module SurveyorParserQuestionGroupMethods
     clear(context)
 
     # build and set context
-    self.attributes = ({
+    self.attributes = PermittedParams.new({
       :text => args[0] || "Question Group",
+      :reference_identifier => reference_identifier,
       :display_type => (original_method =~ /grid|repeater/ ? original_method : "default"),
       :display_order => context[:survey_section].questions.size+1,
       :survey_section => context[:survey_section]
-    }.merge(args[1] || {}))
+    }.merge(args[1] || {})).question_group
     context[:question_group] = self
   end
   def clear(context)
@@ -253,10 +274,10 @@ module SurveyorParserQuestionMethods
     # omit_question_number and force_question_number are not properties of the model, as they are only necessary during the parsing,
     # and so they are deleted before creating the question (or else it throws an error, obviously).
     mod_keys = [:omit_question_number, :grid_display, :force_question_number]
-    omit_display_types = [:checkbox, :hidden] 
-    if(args[1] && ( mod_keys.any?{|elem| args[1].has_key?(elem)} || omit_display_types.any?{|elem| args[1][:display_type]==elem } ))  
+    omit_display_types = [:checkbox, :hidden]
+    if(args[1] && ( mod_keys.any?{|elem| args[1].has_key?(elem)} || omit_display_types.any?{|elem| args[1][:display_type]==elem } ))
       force_question_number = args[1][:force_question_number]
-      omit_question_number = true 
+      omit_question_number = true
       args[1].delete(:omit_question_number)
       args[1].delete(:force_question_number)
     end
@@ -271,14 +292,13 @@ module SurveyorParserQuestionMethods
     text = args[0] || "Question"
     hash_args = args[1] || {}
     correct = hash_args.delete :correct
-    self.attributes = ({
-      :question_number => question_number,
+    self.attributes = PermittedParams.new({
       :question_group => context[:question_group],
       :reference_identifier => reference_identifier,
       :is_mandatory => context[:default_mandatory],
       :text => text,
       :display_type => (original_method =~ /label|image/ ? original_method : "default"),
-      :display_order => context[:survey_section].questions.size }.merge(hash_args))
+      :display_order => context[:survey_section].questions.size }.merge(hash_args)).question
     context[:survey_section].questions << context[:question] = self
 
     # keep reference for correct answers
@@ -293,7 +313,7 @@ module SurveyorParserQuestionMethods
     # add grid answers
     if context[:question_group] && context[:question_group].display_type == "grid"
       (context[:grid_answers] || []).each do |grid_answer|
-        a = context[:question].answers.build(grid_answer.attributes.reject{|k,v| %w(id api_id created_at updated_at).include?(k)})
+        a = context[:question].answers.build(PermittedParams.new(grid_answer.attributes.reject{|k,v| %w(id api_id created_at updated_at).include?(k)}).answer)
         context[:answer_references][self.reference_identifier] ||= {} unless self.reference_identifier.blank?
         context[:answer_references][self.reference_identifier][grid_answer.reference_identifier] = a unless self.reference_identifier.blank? or grid_answer.reference_identifier.blank?
       end
@@ -309,7 +329,7 @@ module SurveyorParserDependencyMethods
       :dependency_condition ].each{|k| context.delete k}
 
     # build and set context
-    self.attributes = (args[0] || {}).merge({:survey_section => context[:survey_section]})
+    self.attributes = PermittedParams.new(args[0] || {}).dependency
     if context[:question]
       context[:dependency] = context[:question].dependency = self
     elsif context[:question_group]
@@ -330,11 +350,11 @@ module SurveyorParserDependencyConditionMethods
 
     # build and set context
     a0, a1, a2 = args
-    self.attributes = ({
+    self.attributes = PermittedParams.new({
       :operator => a1 || "==",
       :question_reference => a0.to_s.gsub(/^q_|^question_/, ""),
       :rule_key => reference_identifier
-    }.merge( a2.is_a?(Hash) ? a2 : { :answer_reference => a2.to_s.gsub(/^a_|^answer_/, "") }))
+    }.merge( a2.is_a?(Hash) ? a2 : { :answer_reference => a2.to_s.gsub(/^a_|^answer_/, "") })).dependency_condition
     context[:dependency].dependency_conditions << context[:dependency_condition] = self
     context[:dependency_conditions] << self
   end
@@ -351,10 +371,10 @@ module SurveyorParserAnswerMethods
 
     # add answers to grid
     if context[:question_group] && context[:question_group].display_type == "grid"
-      self.attributes = ({:display_order => context[:grid_answers].size}.merge(attrs))
+      self.attributes = PermittedParams.new({:display_order => context[:grid_answers].size}.merge(attrs)).answer
       context[:grid_answers] << context[:answer] = self
     else
-      self.attributes = ({:display_order => context[:question].answers.size}.merge(attrs))
+      self.attributes = PermittedParams.new({:display_order => context[:question].answers.size}.merge(attrs)).answer
       context[:question].answers << context[:answer] = self
       # keep reference for dependencies
       unless context[:question].reference_identifier.blank? or reference_identifier.blank?
@@ -406,7 +426,7 @@ module SurveyorParserValidationMethods
     context.delete_if{|k,v| %w(validation validation_condition).map(&:to_sym).include? k}
 
     # build and set context
-    self.attributes = ({:rule => "A"}.merge(args[0] || {}))
+    self.attributes = PermittedParams.new({:rule => "A"}.merge(args[0] || {})).validation
     context[:answer].validations << context[:validation] = self
   end
 end
@@ -419,9 +439,9 @@ module SurveyorParserValidationConditionMethods
 
     # build and set context
     a0, a1 = args
-    self.attributes = ({
+    self.attributes = PermittedParams.new({
       :operator => a0 || "==",
-      :rule_key => reference_identifier}.merge(a1 || {}))
+      :rule_key => reference_identifier}.merge(a1 || {})).validation_condition
     context[:validation].validation_conditions << context[:validation_condition] = self
   end
 end
