@@ -12,18 +12,18 @@ module Surveyor
 
         # Scopes
         base.send :scope, :with_sections, {:include => :sections}
-        
+
         @@validations_already_included ||= nil
         unless @@validations_already_included
           # Validations
           base.send :validates_presence_of, :title
           base.send :validates_uniqueness_of, :survey_version, :scope => :access_code, :message => "survey with matching access code and version already exists"
-          
+
           @@validations_already_included = true
         end
-        
+
         # Whitelisting attributes
-        base.send :attr_accessible, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :css_url, :custom_class, :display_order, :access_code
+        base.send :attr_accessible, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :css_url, :custom_class, :display_order, :access_code, :aftersave_macro_ruby_module
 
         # Derived attributes
         base.send :before_validation, :generate_access_code
@@ -44,7 +44,7 @@ module Surveyor
 
         if(args.present? && (args[0][:access_code] || args[0][:title]) )
           if(args[0][:access_code])
-            surveys = Survey.where(:access_code => args[0][:access_code]).order("survey_version DESC").limit(1)           
+            surveys = Survey.where(:access_code => args[0][:access_code]).order("survey_version DESC").limit(1)
           else
             surveys = Survey.where(:access_code => Survey.to_normalized_string(args[0][:title])).order("survey_version DESC").limit(1)
           end
