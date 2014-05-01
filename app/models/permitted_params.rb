@@ -8,7 +8,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*survey_attributes)
   end
   def survey_attributes
-    [:access_code, :aftersave_macro_ruby_module, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :css_url, :custom_class, :display_order]
+    [:title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :css_url, :custom_class, :display_order, :access_code, :ajax, :aftersave_macro_ruby_module]
   end
 
   # survey_translation
@@ -24,7 +24,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*survey_section_attributes)
   end
   def survey_section_attributes
-    [:survey, :survey_id, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :custom_class, :display_order]
+    [:survey, :survey_id, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :custom_class, :display_order, :rights, :show_display]
   end
 
   # question
@@ -32,7 +32,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*question_attributes)
   end
   def question_attributes
-    [:survey_section, :data_attributes, :question_number, :question_group, :survey_section_id, :question_group_id, :text, :short_text, :help_text, :pick, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :display_type, :is_mandatory, :display_width, :custom_class, :custom_renderer, :correct_answer_id]
+    [:survey_section, :question_group, :survey_section_id, :question_group_id, :text, :short_text, :help_text, :pick, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :display_type, :is_mandatory, :display_width, :custom_class, :custom_renderer, :correct_answer_id, :rights, :edit_only_if, :beforesave_macro_ruby_module, :aftersave_macro_ruby_module, :beforesave_macro_ruby_inline, :aftersave_macro_ruby_inline, :aftercreate_macro_ruby_module, :linked_repeater, :data_attributes, :access_level, :afterupdate_macro_ruby_module, :options, :grid_display, :answer_generator, :master_data_export_identifier, :help_link, :question_number, :do_not_copy]
   end
 
   # question_group
@@ -40,7 +40,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*question_group_attributes)
   end
   def question_group_attributes
-    [:text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer]
+    [:text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer, :label_text, :rights, :edit_only_if, :display_order, :survey_section_id, :help_link]
   end
 
   # answer
@@ -48,7 +48,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*answer_attributes)
   end
   def answer_attributes
-    [:question, :question_id, :text, :short_text, :help_text, :weight, :response_class, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :is_exclusive, :display_length, :custom_class, :custom_renderer, :default_value, :display_type, :input_mask, :input_mask_placeholder]
+    [:question, :question_id, :text, :short_text, :help_text, :weight, :response_class, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :is_exclusive, :display_length, :custom_class, :custom_renderer, :default_value, :display_type, :input_mask, :input_mask_placeholder, :size, :maxlength, :html_answer_options, :data_attributes, :ext_reference_identifier]
   end
 
   # dependency
@@ -56,7 +56,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*dependency_attributes)
   end
   def dependency_attributes
-    [:question, :question_group, :question_id, :question_group_id, :rule]
+    [:question, :question_group, :question_id, :question_group_id, :rule, :survey_section]
   end
 
   # dependency_condition
@@ -80,7 +80,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*validation_condition_attributes)
   end
   def validation_condition_attributes
-    [:validation, :validation_id, :rule_key, :operator, :question_id, :answer_id, :datetime_value, :integer_value, :float_value, :unit, :text_value, :string_value, :response_other, :regexp]
+    [:validation, :validation_id, :rule_key, :operator, :question_id, :answer_id, :datetime_value, :integer_value, :float_value, :unit, :text_value, :string_value, :response_other, :regexp, :error_msg, :calculated_value]
   end
 
   # response
@@ -88,7 +88,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*response_attributes)
   end
   def response_attributes
-    [:response_set, :question, :answer, :date_value, :time_value, :response_set_id, :question_id, :answer_id, :datetime_value, :integer_value, :float_value, :unit, :text_value, :string_value, :response_other, :response_group, :survey_section_id]
+    [:response_set, :question, :answer, :date_value, :time_value, :response_set_id, :question_id, :answer_id, :datetime_value, :integer_value, :float_value, :unit, :text_value, :string_value, :response_other, :response_group, :survey_section_id, :attach_file_name, :attach_content_type, :attach_file_size, :attach_updated_at]
   end
 
   # response_set
@@ -96,7 +96,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*response_set_attributes)
   end
   def response_set_attributes
-    [:survey, :responses_attributes, :user_id, :survey_id]
+    [:survey, :responses_attributes, :user_id, :survey_id, :section_errors, :aasm_state, :ancestry]
   end
 
 end

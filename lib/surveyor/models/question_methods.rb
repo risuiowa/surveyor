@@ -27,7 +27,7 @@ module Surveyor
         end
 
         # Whitelisting attributes
-        base.send :attr_accessible, :data_attributes, :question_number, :survey_section, :question_group, :survey_section_id, :question_group_id, :text, :short_text, :help_text, :pick, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :display_type, :is_mandatory, :display_width, :custom_class, :custom_renderer, :correct_answer_id
+        base.send :attr_accessible, :data_attributes, :question_number, :survey_section, :question_group, :survey_section_id, :question_group_id, :text, :short_text, :help_text, :pick, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :display_type, :is_mandatory, :display_width, :custom_class, :custom_renderer, :correct_answer_id, :rights, :edit_only_if, :beforesave_macro_ruby_module, :aftersave_macro_ruby_module, :beforesave_macro_ruby_inline, :aftersave_macro_ruby_inline, :aftercreate_macro_ruby_module, :linked_repeater, :data_attributes, :access_level, :afterupdate_macro_ruby_module, :options, :grid_display, :answer_generator, :master_data_export_identifier, :help_link, :question_number, :do_not_copy
       end
 
       include RenderText

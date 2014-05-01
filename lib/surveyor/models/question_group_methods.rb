@@ -10,7 +10,7 @@ module Surveyor
         base.send :belongs_to, :survey_section
         
         # Whitelisting attributes
-        base.send :attr_accessible, :text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer,:survey_section,:survey_section_id
+        base.send :attr_accessible, :text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer,:survey_section,:survey_section_id, :label_text, :rights, :edit_only_if, :display_order, :survey_section_id, :help_link
       end
 
       include RenderText

@@ -23,7 +23,7 @@ module Surveyor
         end
         
         # Whitelisting attributes
-        base.send :attr_accessible, :survey, :survey_id, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :custom_class
+        base.send :attr_accessible, :survey, :survey_id, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :custom_class, :rights, :show_display
       end
 
       # Instance Methods
@@ -37,7 +37,6 @@ module Surveyor
       end
       
       def questions_and_groups
-        qs = []
         questions.each_with_index.map do |q,i|
           if q.part_of_group?
             if (i+1 >= questions.size) or (q.question_group_id != questions[i+1].question_group_id)
