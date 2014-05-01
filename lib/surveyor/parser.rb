@@ -1,3 +1,4 @@
+require 'debugger'
 %w(survey survey_section question_group question dependency dependency_condition answer validation validation_condition).each {|model| require model }
 module Surveyor
   class ParserError < StandardError; end
@@ -292,13 +293,16 @@ module SurveyorParserQuestionMethods
     text = args[0] || "Question"
     hash_args = args[1] || {}
     correct = hash_args.delete :correct
+    #debugger
     self.attributes = PermittedParams.new({
+      :question_number => question_number,
       :reference_identifier => reference_identifier,
       :is_mandatory => context[:default_mandatory],
       :text => text,
       :display_type => (original_method =~ /label|image/ ? original_method : "default"),
       :display_order => context[:survey_section].questions.size }.merge(hash_args)).question
     self.question_group = context[:question_group]
+    #debugger
     context[:survey_section].questions << context[:question] = self
 
     # keep reference for correct answers
