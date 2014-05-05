@@ -7,20 +7,20 @@ module Surveyor
         base.send :belongs_to, :question_group
         base.send :belongs_to, :survey_section
         base.send :has_many, :dependency_conditions, :dependent => :destroy
-        
+
         @@validations_already_included ||= nil
         unless @@validations_already_included
           # Validations
           base.send :validates_presence_of, :rule
           base.send :validates_numericality_of, :question_id, :if => Proc.new { |d| d.question_group_id.nil? }
           base.send :validates_numericality_of, :question_group_id, :if => Proc.new { |d| d.question_id.nil? }
-          
+
           @@validations_already_included = true
         end
-        
+
         # Whitelisting attributes
         base.send :attr_accessible, :question, :question_group, :question_id, :question_group_id, :rule,:survey_section,:survey_section_id
-        
+
         # Attribute aliases
         base.send :alias_attribute, :dependent_question_id, :question_id
       end
@@ -33,7 +33,7 @@ module Surveyor
 
       def question_id=(i)
         write_attribute(:question_group_id, nil) unless i.nil?
-        write_attribute(:question_id, i) 
+        write_attribute(:question_id, i)
       end
 
       # Has this dependency has been met in the context of response_set?

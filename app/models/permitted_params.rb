@@ -24,7 +24,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*survey_section_attributes)
   end
   def survey_section_attributes
-    [:survey, :survey_id, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :custom_class, :display_order, :rights, :show_display]
+    [:survey, :survey_id, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :custom_class, :display_order, :rights, :show_display, :dependency, :dependency_id]
   end
 
   # question
@@ -56,7 +56,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*dependency_attributes)
   end
   def dependency_attributes
-    [:question, :question_group, :question_id, :question_group_id, :rule, :survey_section]
+    [:question, :question_group, :question_id, :question_group_id, :rule, :survey_section, :survey_section_id]
   end
 
   # dependency_condition

@@ -58,6 +58,7 @@ module Surveyor
     end
     def parse(str)
       instance_eval(str)
+      #debugger
       return context[:survey]
     end
     # This method_missing does all the heavy lifting for the DSL
@@ -85,6 +86,7 @@ module Surveyor
           report_lost_and_duplicate_references
           Surveyor::Parser.rake_trace("", -2)
           if context[:survey].save
+            #debugger
             Surveyor::Parser.rake_trace "Survey saved."
           else
             Surveyor::Parser.raise_error "Survey not saved: #{context[:survey].errors.full_messages.join(", ")}"
@@ -205,7 +207,10 @@ module SurveyorParserSurveySectionMethods
       :title => title,
       :reference_identifier => reference_identifier,
       :display_order => context[:survey].sections.size }.merge(args[1] || {})).survey_section
+    #debugger
     context[:survey].sections << context[:survey_section] = self
+    #debugger
+    #i = 1
   end
   def clear(context)
     [ :survey_section,
@@ -293,7 +298,6 @@ module SurveyorParserQuestionMethods
     text = args[0] || "Question"
     hash_args = args[1] || {}
     correct = hash_args.delete :correct
-    #debugger
     self.attributes = PermittedParams.new({
       :question_number => question_number,
       :reference_identifier => reference_identifier,
@@ -302,7 +306,6 @@ module SurveyorParserQuestionMethods
       :display_type => (original_method =~ /label|image/ ? original_method : "default"),
       :display_order => context[:survey_section].questions.size }.merge(hash_args)).question
     self.question_group = context[:question_group]
-    #debugger
     context[:survey_section].questions << context[:question] = self
 
     # keep reference for correct answers
@@ -334,6 +337,7 @@ module SurveyorParserDependencyMethods
 
     # build and set context
     self.attributes = PermittedParams.new(args[0] || {}).dependency
+    self.survey_section = context[:survey_section]
     if context[:question]
       context[:dependency] = context[:question].dependency = self
     elsif context[:question_group]
