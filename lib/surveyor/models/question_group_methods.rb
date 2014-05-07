@@ -8,13 +8,13 @@ module Surveyor
         base.send :has_many, :questions
         base.send :has_one, :dependency
         base.send :belongs_to, :survey_section
-        
+
         # Whitelisting attributes
-        base.send :attr_accessible, :text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer,:survey_section,:survey_section_id, :label_text, :rights, :edit_only_if, :display_order, :survey_section_id, :help_link
+        #base.send :attr_accessible, :text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer,:survey_section,:survey_section_id, :label_text, :rights, :edit_only_if, :display_order, :survey_section_id, :help_link
       end
 
       include RenderText
-      
+
       # Instance Methods
       def initialize(*args)
         super(*args)

@@ -23,7 +23,7 @@ module Surveyor
         end
 
         # Whitelisting attributes
-        base.send :attr_accessible, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :css_url, :custom_class, :display_order, :access_code, :ajax, :aftersave_macro_ruby_module
+        #base.send :attr_accessible, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :css_url, :custom_class, :display_order, :access_code, :ajax, :aftersave_macro_ruby_module
 
         # Derived attributes
         base.send :before_validation, :generate_access_code

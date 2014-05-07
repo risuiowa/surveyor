@@ -19,7 +19,7 @@ module Surveyor
         end
 
         # Whitelisting attributes
-        base.send :attr_accessible, :question, :question_group, :question_id, :question_group_id, :rule,:survey_section,:survey_section_id
+        #base.send :attr_accessible, :question, :question_group, :question_id, :question_group_id, :rule,:survey_section,:survey_section_id
 
         # Attribute aliases
         base.send :alias_attribute, :dependent_question_id, :question_id

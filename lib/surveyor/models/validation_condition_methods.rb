@@ -14,15 +14,15 @@ module Surveyor
           base.send :validates_uniqueness_of, :rule_key, :scope => :validation_id
           # this causes issues with building and saving
           # base.send :validates_numericality_of, :validation_id #, :question_id, :answer_id
-          
+
           @@validations_already_included = true
         end
-        
+
         base.send :include, Surveyor::ActsAsResponse # includes "as" instance method
-        
+
         # Whitelisting attributes
-        base.send :attr_accessible, :validation, :validation_id, :rule_key, :operator, :question_id, :answer_id, :datetime_value, :integer_value, :float_value, :unit, :text_value, :string_value, :response_other, :regexp, :error_msg, :calculated_value
-        
+        #base.send :attr_accessible, :validation, :validation_id, :rule_key, :operator, :question_id, :answer_id, :datetime_value, :integer_value, :float_value, :unit, :text_value, :string_value, :response_other, :regexp, :error_msg, :calculated_value
+
         # Class methods
         base.instance_eval do
           def operators

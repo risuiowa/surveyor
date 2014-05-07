@@ -7,19 +7,19 @@ module Surveyor
         base.send :has_many, :validation_conditions, :dependent => :destroy
 
         # Scopes
-        
+
         @@validations_already_included ||= nil
         unless @@validations_already_included
           # Validations
           base.send :validates_presence_of, :rule
           # this causes issues with building and saving
           # base.send :validates_numericality_of, :answer_id
-          
+
           @@validations_already_included = true
         end
-        
+
         # Whitelisting attributes
-        base.send :attr_accessible, :answer, :answer_id, :rule, :message
+        #base.send :attr_accessible, :answer, :answer_id, :rule, :message
       end
 
       # Instance Methods

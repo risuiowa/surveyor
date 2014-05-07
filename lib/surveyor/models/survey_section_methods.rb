@@ -11,19 +11,19 @@ module Surveyor
         # Scopes
         base.send :default_scope, :order => "display_order ASC"
         base.send :scope, :with_includes, { :include => {:questions => [:answers, :question_group, {:dependency => :dependency_conditions}]}}
-        
+
         @@validations_already_included ||= nil
         unless @@validations_already_included
           # Validations
           base.send :validates_presence_of, :title, :display_order
           # this causes issues with building and saving
           #, :survey
-          
+
           @@validations_already_included = true
         end
-        
+
         # Whitelisting attributes
-        base.send :attr_accessible, :survey, :survey_id, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :custom_class, :rights, :show_display
+        #base.send :attr_accessible, :survey, :survey_id, :title, :description, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_order, :custom_class, :rights, :show_display
       end
 
       # Instance Methods
@@ -35,7 +35,7 @@ module Surveyor
       def default_args
         self.data_export_identifier ||= Surveyor::Common.normalize(title)
       end
-      
+
       def questions_and_groups
         questions.each_with_index.map do |q,i|
           if q.part_of_group?
