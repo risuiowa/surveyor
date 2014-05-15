@@ -66,6 +66,7 @@ module Surveyor
       method_name, reference_identifier = missing_method.to_s.split("_", 2)
       type = full(method_name)
       Surveyor::Parser.raise_error( "\"#{type}\" is not a surveyor method." )if !%w(survey survey_section question_group question dependency dependency_condition answer validation validation_condition).include?(type)
+      Surveyor::Parser.raise_error('A data_export_identifier is required on all questions, labels and images') if type == 'question' && !contains?(args,'data_export_identifier')
 
       Surveyor::Parser.rake_trace(reference_identifier.blank? ? "#{type} #{args.map(&:inspect).join ', '}" : "#{type}_#{reference_identifier} #{args.map(&:inspect).join ', '}",
                                   block_models.include?(type) ? 2 : 0)
@@ -86,7 +87,6 @@ module Surveyor
           report_lost_and_duplicate_references
           Surveyor::Parser.rake_trace("", -2)
           if context[:survey].save
-            #debugger
             Surveyor::Parser.rake_trace "Survey saved."
           else
             Surveyor::Parser.raise_error "Survey not saved: #{context[:survey].errors.full_messages.join(", ")}"
@@ -121,6 +121,7 @@ module Surveyor
     def report_lost_and_duplicate_references
       Surveyor::Parser.raise_error("Bad references: #{self.context[:bad_references].join("; ")}", true) unless self.context[:bad_references].empty?
       Surveyor::Parser.raise_error("Duplicate references: #{self.context[:duplicate_references].join("; ")}", true) unless self.context[:duplicate_references].empty?
+      Surveyor::Parser.raise_error("Duplicate data export identifiers: #{self.context[:duplicate_data_exports].join("; ")}", true) unless self.context[:duplicate_data_exports].empty?
     end
     def resolve_question_correct_answers
       self.context[:questions_with_correct_answers].each do |question_reference_idenitifer, correct_answer_reference|
@@ -141,6 +142,10 @@ module Surveyor
         self.context[:answer_references][dc.question_reference] ||= {}
         self.context[:bad_references].push "q_#{dc.question_reference}, a_#{dc.answer_reference}" if !dc.answer_reference.blank? and (dc.answer = self.context[:answer_references][dc.question_reference][dc.answer_reference]).nil?
       end
+    end
+    def contains?(args,option)
+      args.each{|arg| return true if arg.respond_to?(:has_key?) && arg.has_key?(option.to_sym)}
+      false
     end
   end
 end
@@ -166,9 +171,11 @@ module SurveyorParserSurveyMethods
     context.delete_if{|k,v| true}
     context.merge!({
       :question_references => {},
+      :data_export_identifiers => {},
       :answer_references => {},
       :bad_references => [],
       :duplicate_references => [],
+      :duplicate_data_exports => [],
       :dependency_conditions => [],
       :questions_with_correct_answers => {},
       :default_mandatory => false
@@ -315,6 +322,10 @@ module SurveyorParserQuestionMethods
     unless self.reference_identifier.blank?
       context[:duplicate_references].push "q_#{self.reference_identifier}" if context[:question_references].has_key?(self.reference_identifier)
       context[:question_references][self.reference_identifier] = context[:question]
+    end
+    unless self.data_export_identifier.blank?
+      context[:duplicate_data_exports].push self.data_export_identifier if context[:data_export_identifiers].has_key?(self.data_export_identifier)
+      context[:data_export_identifiers][self.data_export_identifier] = true
     end
 
     # add grid answers
