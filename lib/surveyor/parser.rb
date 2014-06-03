@@ -1,4 +1,3 @@
-require 'debugger'
 %w(survey survey_section question_group question dependency dependency_condition answer validation validation_condition).each {|model| require model }
 module Surveyor
   class ParserError < StandardError; end
