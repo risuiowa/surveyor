@@ -40,7 +40,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*question_group_attributes)
   end
   def question_group_attributes
-    [:text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer, :label_text, :rights, :edit_only_if, :display_order, :survey_section_id, :help_link]
+    [:text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer, :label_text, :rights, :edit_only_if, :display_order, :survey_section_id, :help_link, :data_attributes]
   end
 
   # answer
