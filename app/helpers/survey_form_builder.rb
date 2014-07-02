@@ -1,4 +1,4 @@
-class SurveyFormBuilder < ActionView::Helpers::FormBuilder 
+class SurveyFormBuilder < ActionView::Helpers::FormBuilder
   def survey_check_box(method, options = {}, checked_value = "1", unchecked_value = "0")
     fields = @template.survey_check_box(@object_name, method, options.merge(:object => @object), checked_value, unchecked_value)
     fields[1]

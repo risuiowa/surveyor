@@ -7,12 +7,12 @@ module Surveyor
         # Associations
         base.send :belongs_to, :survey_section
         base.send :belongs_to, :question_group, :dependent => :destroy
-        base.send :has_many, :answers, :order => "display_order ASC", :dependent => :destroy # it might not always have answers
+        base.send :has_many, :answers, -> { base.order("display_order ASC") }, :dependent => :destroy # it might not always have answers
         base.send :has_one, :dependency, :dependent => :destroy
         base.send :belongs_to, :correct_answer, :class_name => "Answer", :dependent => :destroy
 
         # Scopes
-        base.send :default_scope, :order => "display_order ASC"
+        base.send :default_scope, -> { base.order("display_order ASC") }
 
         @@validations_already_included ||= nil
         unless @@validations_already_included

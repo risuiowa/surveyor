@@ -10,7 +10,7 @@ module Surveyor
         base.send :has_many, :validations, :dependent => :destroy
 
         # Scopes
-        base.send :default_scope, :order => "display_order ASC"
+        base.send :default_scope, -> { base.order("display_order ASC") }
 
         @@validations_already_included ||= nil
         unless @@validations_already_included

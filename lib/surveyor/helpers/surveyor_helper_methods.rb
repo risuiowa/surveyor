@@ -1,3 +1,4 @@
+#require_relative 'asset_pipeline'
 require 'surveyor/helpers/asset_pipeline'
 
 module Surveyor

@@ -21,7 +21,7 @@ module Surveyor
         end
 
         # Attributes
-        base.send :attr_protected, :completed_at
+        #base.send :attr_protected, :completed_at
 
         # Whitelisting attributes
         #base.send :attr_accessible, :survey, :responses_attributes, :user_id, :survey_id, :section_errors, :aasm_state, :ancestry

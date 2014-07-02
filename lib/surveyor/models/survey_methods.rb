@@ -6,12 +6,12 @@ module Surveyor
     module SurveyMethods
       def self.included(base)
         # Associations
-        base.send :has_many, :sections, :class_name => "SurveySection", :order => 'display_order', :dependent => :destroy
-        base.send :has_many, :sections_with_questions, :include => :questions, :class_name => "SurveySection", :order => 'display_order'
+        base.send :has_many, :sections, ->{ base.order('display_order') }, :class_name => "SurveySection", :dependent => :destroy
+        base.send :has_many, :sections_with_questions, ->{ base.includes(:questions).order('display_order') }, :class_name => "SurveySection"
         base.send :has_many, :response_sets
 
         # Scopes
-        base.send :scope, :with_sections, {:include => :sections}
+        base.send :scope, :with_sections, ->{ base.includes(:sections) }
 
         @@validations_already_included ||= nil
         unless @@validations_already_included

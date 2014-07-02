@@ -1,16 +1,23 @@
 module Surveyor
   module Models
     module SurveySectionMethods
+      #def with_includes
+
+        #base.send :scope, :with_includes, ->{{ :include => {:questions => [:answers, :question_group, {:dependency => :dependency_conditions}]}}}
+      #end
+
       def self.included(base)
         # Associations
-        base.send :has_many, :questions, :order => "display_order ASC", :dependent => :destroy
-        base.send :has_many, :question_groups, :order => "display_order ASC", :dependent => :destroy
-        base.send :has_many, :dependencies, :order => "display_order ASC", :dependent => :destroy
+        base.send :has_many, :questions, ->{ base.order("display_order ASC") }, :dependent => :destroy
+        base.send :has_many, :question_groups, ->{ base.order("display_order ASC") }, :dependent => :destroy
+        base.send :has_many, :dependencies, ->{ base.order("display_order ASC") }, :dependent => :destroy
         base.send :belongs_to, :survey
 
         # Scopes
-        base.send :default_scope, :order => "display_order ASC"
-        base.send :scope, :with_includes, { :include => {:questions => [:answers, :question_group, {:dependency => :dependency_conditions}]}}
+        base.send :default_scope, -> { base.order("display_order ASC") }
+        #base.send :scope, :with_includes, { :include => {:questions => [:answers, :question_group, {:dependency => :dependency_conditions}]}} # original version
+        base.send :scope, :with_includes, -> { base.includes(:questions => [:answers, :question_group, {:dependency => :dependency_conditions}]) }
+
 
         @@validations_already_included ||= nil
         unless @@validations_already_included

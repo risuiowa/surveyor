@@ -1,6 +1,6 @@
 == SurveyorController
 
-The SurveyorController class just includes actions from Surveyor::SurveyorControllerMethods module. You may include your own module, and overwrite the methods or add to them using "super". A template for this customization is in your app/controllers/surveyor\_controller.rb. SurveyorController is "unloadable", so changes in development (and any environment that does not cache classes) will be reflected immediately without restarting the app.
+The SurveyorController class just includes actions from Surveyor::SurveyorControllerMethods module. You may include your own module, and overwrite the methods or add to them using "super". A template for this customization is in your app/controllers/surveyor\_controller.rb.
 
 == Models
 

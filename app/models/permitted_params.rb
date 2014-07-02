@@ -37,10 +37,12 @@ class PermittedParams < Struct.new(:params)
 
   # question_group
   def question_group
-    strong_parameters.permit(*question_group_attributes)
+    # TODO: This isn't very secure, but it works for now
+    #strong_parameters.permit(*question_group_attributes)
+    strong_parameters.permit!
   end
   def question_group_attributes
-    [:text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer, :label_text, :rights, :edit_only_if, :display_order, :survey_section_id, :help_link, :data_attributes]
+    [:text, :help_text, :reference_identifier, :data_export_identifier, :common_namespace, :common_identifier, :display_type, :custom_class, :custom_renderer, :label_text, :rights, :edit_only_if, :display_order, :survey_section, :survey_section_id, :help_link, :data_attributes]
   end
 
   # answer

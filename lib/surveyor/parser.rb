@@ -57,7 +57,6 @@ module Surveyor
     end
     def parse(str)
       instance_eval(str)
-      #debugger
       return context[:survey]
     end
     # This method_missing does all the heavy lifting for the DSL
@@ -213,10 +212,7 @@ module SurveyorParserSurveySectionMethods
       :title => title,
       :reference_identifier => reference_identifier,
       :display_order => context[:survey].sections.size }.merge(args[1] || {})).survey_section
-    #debugger
     context[:survey].sections << context[:survey_section] = self
-    #debugger
-    #i = 1
   end
   def clear(context)
     [ :survey_section,

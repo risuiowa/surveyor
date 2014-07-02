@@ -119,8 +119,7 @@ module Surveyor
 
     def load_and_update_response_set
       ResponseSet.transaction do
-        @response_set = ResponseSet.
-          find_by_access_code(params[:response_set_code], :include => {:responses => :answer})
+        @response_set = ResponseSet.includes({:responses => :answer}).where(:access_code => params[:response_set_code]).first
         if @response_set
           saved = true
           if params[:r]
@@ -160,8 +159,7 @@ module Surveyor
     end
 
     def set_response_set_and_render_context
-      @response_set = ResponseSet.
-        find_by_access_code(params[:response_set_code], :include => {:responses => [:question, :answer]})
+      @response_set = ResponseSet.includes({:responses => [:question, :answer]}).where(:access_code => params[:response_set_code]).first
       @render_context = render_context
     end
 
