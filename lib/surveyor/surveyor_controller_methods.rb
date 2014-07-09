@@ -13,7 +13,7 @@ module Surveyor
 
     # Actions
     def new
-      @surveys = Survey.find(:all)
+      @surveys = Survey.all
       @codes = @surveys.inject({}) do |codes,s|
         codes[s.access_code] ||= {}
         codes[s.access_code][:title] = s.title
