@@ -4,6 +4,8 @@ module Surveyor
       def self.included(base)
         # Associations
         base.send :belongs_to, :validation
+        base.send :belongs_to, :answer
+        base.send :belongs_to, :question
 
         # Scopes
         @@validations_already_included ||= nil

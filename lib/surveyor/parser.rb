@@ -81,6 +81,7 @@ module Surveyor
         self.instance_eval(&block)
         if type == 'survey'
           resolve_dependency_condition_references
+          resolve_validation_condition_references
           resolve_question_correct_answers
           report_lost_and_duplicate_references
           Surveyor::Parser.rake_trace("", -2)
@@ -141,6 +142,13 @@ module Surveyor
         self.context[:bad_references].push "q_#{dc.question_reference}, a_#{dc.answer_reference}" if !dc.answer_reference.blank? and (dc.answer = self.context[:answer_references][dc.question_reference][dc.answer_reference]).nil?
       end
     end
+    def resolve_validation_condition_references
+      self.context[:validation_conditions].each do |vc|
+        self.context[:bad_references].push "q_#{vc.question_reference}" if !vc.question_reference.blank? and (vc.question = self.context[:question_references][vc.question_reference]).nil?
+        self.context[:answer_references][vc.question_reference] ||= {}
+        self.context[:bad_references].push "a_#{vc.answer_reference}" if !vc.answer_reference.blank? and (vc.answer = self.context[:answer_references][vc.question_reference][vc.answer_reference]).nil?
+      end
+    end
     def contains?(args,option)
       args.each{|arg| return true if arg.respond_to?(:has_key?) && arg.has_key?(option.to_sym)}
       false
@@ -175,6 +183,7 @@ module SurveyorParserSurveyMethods
       :duplicate_references => [],
       :duplicate_data_exports => [],
       :dependency_conditions => [],
+      :validation_conditions => [],
       :questions_with_correct_answers => {},
       :default_mandatory => false
     })
@@ -447,6 +456,9 @@ end
 
 # ValidationCondition model
 module SurveyorParserValidationConditionMethods
+  ValidationCondition.instance_eval do
+    attr_accessor :question_reference, :answer_reference
+  end
   def parse_and_build(context, args, original_method, reference_identifier)
     # clear context
     context.delete :validation_condition
@@ -457,5 +469,6 @@ module SurveyorParserValidationConditionMethods
       :operator => a0 || "==",
       :rule_key => reference_identifier}.merge(a1 || {})).validation_condition
     context[:validation].validation_conditions << context[:validation_condition] = self
+    context[:validation_conditions] << self
   end
 end
