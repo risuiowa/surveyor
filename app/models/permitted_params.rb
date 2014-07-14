@@ -80,7 +80,7 @@ class PermittedParams < Struct.new(:params)
     strong_parameters.permit(*validation_condition_attributes)
   end
   def validation_condition_attributes
-    [:validation, :validation_id, :rule_key, :operator, :question_id, :answer_id, :datetime_value, :integer_value, :float_value, :unit, :text_value, :string_value, :response_other, :regexp, :error_msg, :calculated_value]
+    [:validation, :validation_id, :rule_key, :operator, :question_id, :answer_id, :datetime_value, :integer_value, :float_value, :unit, :text_value, :string_value, :response_other, :regexp, :error_msg, :calculated_value, :question_reference, :answer_reference]
   end
 
   # response
