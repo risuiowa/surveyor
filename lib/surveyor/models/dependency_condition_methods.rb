@@ -35,8 +35,14 @@ module Surveyor
 
       # Instance methods
       def to_hash(response_set)
+        if response_set.class.to_s == 'ResponseSet'
+          responses_class = 'responses'
+        else
+          responses_class = 'response_versions'
+        end
+
         # all responses to associated question
-        responses = question.blank? ? [] : response_set.responses.where("responses.answer_id in (?)", question.answer_ids).all
+        responses = question.blank? ? [] : response_set.responses.where("#{responses_class}.answer_id in (?)", question.answer_ids).all
         if self.operator.match /^count(>|>=|<|<=|==|!=)\d+$/
           op, i = self.operator.scan(/^count(>|>=|<|<=|==|!=)(\d+)$/).flatten
           # logger.warn({rule_key.to_sym => responses.count.send(op, i.to_i)})
