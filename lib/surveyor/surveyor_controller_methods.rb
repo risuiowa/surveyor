@@ -159,7 +159,7 @@ module Surveyor
     end
 
     def set_response_set_and_render_context
-      @response_set = ResponseSet.includes({:responses => [:question, :answer]}).where(:access_code => params[:response_set_code]).first
+      @response_set = ResponseSet.includes({:protocol_form => [:pi, :co_pis, :technicians, :species]}, {:responses => [{:question=>[:question_group]}, :answer]}).where(:access_code => params[:response_set_code]).first
       @render_context = render_context
     end
 
