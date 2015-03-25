@@ -352,11 +352,13 @@ module SurveyorParserDependencyMethods
 
     # build and set context
     self.attributes = PermittedParams.new(args[0] || {}).dependency
-    self.survey_section = context[:survey_section]
+    #self.survey_section = context[:survey_section]
     if context[:question]
       context[:dependency] = context[:question].dependency = self
     elsif context[:question_group]
       context[:dependency] = context[:question_group].dependency = self
+    elsif context[:survey_section]
+      context[:dependency] = context[:survey_section].dependency = self
     end
   end
 end

@@ -12,9 +12,11 @@ module Surveyor
         unless @@validations_already_included
           # Validations
           base.send :validates_presence_of, :rule
-          base.send :validates_numericality_of, :question_id, :if => Proc.new { |d| d.question_group_id.nil? }
-          base.send :validates_numericality_of, :question_group_id, :if => Proc.new { |d| d.question_id.nil? }
-
+          base.send :validates_each, :question_id, :question_group_id, :survey_section_id do |record, attr, value|
+            unless [record.question_id, record.question_group_id, record.survey_section_id].any?{|val| val.present?}
+              record.errors.add('Question_id, Question_group_id, or Survey_section_id must be present for a valid dependency')
+            end
+          end
           @@validations_already_included = true
         end
 

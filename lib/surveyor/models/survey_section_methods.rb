@@ -10,7 +10,8 @@ module Surveyor
         # Associations
         base.send :has_many, :questions, ->{ base.order("display_order ASC") }, :dependent => :destroy
         base.send :has_many, :question_groups, ->{ base.order("display_order ASC") }, :dependent => :destroy
-        base.send :has_many, :dependencies, ->{ base.order("display_order ASC") }, :dependent => :destroy
+        #base.send :has_many, :dependencies, ->{ base.order("display_order ASC") }, :dependent => :destroy
+        base.send :has_one, :dependency, :dependent => :destroy
         base.send :belongs_to, :survey
 
         # Scopes
