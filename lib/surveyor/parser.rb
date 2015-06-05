@@ -121,6 +121,18 @@ module Surveyor
       Surveyor::Parser.raise_error("Bad references: #{self.context[:bad_references].join("; ")}", true) unless self.context[:bad_references].empty?
       Surveyor::Parser.raise_error("Duplicate references: #{self.context[:duplicate_references].join("; ")}", true) unless self.context[:duplicate_references].empty?
       Surveyor::Parser.raise_error("Duplicate data export identifiers: #{self.context[:duplicate_data_exports].join("; ")}", true) unless self.context[:duplicate_data_exports].empty?
+
+      current_survey = self.context[:survey].data_export_identifier
+      other_surveys_to_check = Survey.select(:data_export_identifier).where.not(data_export_identifier: current_survey).distinct.pluck(:data_export_identifier)
+
+      other_surveys_to_check.each do |survey_data_export_identifer|
+
+        #Check for duplicates between the parsed survey and the most recent saved version of each other survey
+        duplicates = (self.context[:data_export_identifiers].keys & Survey.where(data_export_identifier: survey_data_export_identifer).last.questions.map(&:data_export_identifier))
+        if duplicates.present?
+          Surveyor::Parser.raise_error("Duplicate data export identifiers accross different Surveys: #{duplicates.join("; ")}", true)
+        end
+      end
     end
     def resolve_question_correct_answers
       self.context[:questions_with_correct_answers].each do |question_reference_idenitifer, correct_answer_reference|
